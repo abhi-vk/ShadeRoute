@@ -26,9 +26,30 @@ function formatTime(date) { return date.toLocaleTimeString([], { hour: 'numeric'
 function parseDate(value) { return new Date(value); }
 
 async function searchPlaces(query) {
-  const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=8&addressdetails=1&namedetails=1&q=${encodeURIComponent(query)}`, { headers: { 'Accept-Language': 'en-IN,en' } });
-  if (!response.ok) throw new Error('Geocoding unavailable');
-  return response.json();
+  const encodedQuery = encodeURIComponent(query);
+  const photonRequest = fetch(`https://photon.komoot.io/api/?q=${encodedQuery}&limit=8&lang=en`).then(async (response) => {
+    if (!response.ok) throw new Error('Photon unavailable');
+    const data = await response.json();
+    return (data.features || []).map((feature) => {
+      const properties = feature.properties || {};
+      const address = [properties.street, properties.city, properties.state, properties.postcode, properties.country].filter(Boolean).join(', ');
+      return { display_name: [properties.name, address].filter(Boolean).join(', '), lat: feature.geometry.coordinates[1], lon: feature.geometry.coordinates[0] };
+    }).filter((place) => place.display_name);
+  });
+  const nominatimRequest = fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=8&addressdetails=1&namedetails=1&q=${encodedQuery}`, { headers: { 'Accept-Language': 'en-IN,en' } }).then(async (response) => {
+    if (!response.ok) throw new Error('Nominatim unavailable');
+    return response.json();
+  });
+  const results = await Promise.allSettled([photonRequest, nominatimRequest]);
+  const places = results.filter((result) => result.status === 'fulfilled').flatMap((result) => result.value);
+  const unique = new Map();
+  places.forEach((place) => { const key = `${Number(place.lat).toFixed(4)},${Number(place.lon).toFixed(4)}`; if (!unique.has(key)) unique.set(key, place); });
+  if (!unique.size) throw new Error('Geocoding unavailable');
+  const queryWords = query.toLowerCase().split(/[^a-z0-9]+/).filter((word) => word.length > 2);
+  return [...unique.values()].sort((a, b) => {
+    const score = (place) => queryWords.reduce((total, word) => total + (place.display_name.toLowerCase().includes(word) ? 1 : 0), 0);
+    return score(b) - score(a);
+  }).slice(0, 10);
 }
 
 function usePlace(place, input, suggestions) {
