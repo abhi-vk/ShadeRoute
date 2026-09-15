@@ -25,23 +25,44 @@ function formatDirection(degrees) { const directions = ['N','NE','E','SE','S','S
 function formatTime(date) { return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); }
 function parseDate(value) { return new Date(value); }
 
+async function searchPlaces(query) {
+  const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=8&addressdetails=1&namedetails=1&q=${encodeURIComponent(query)}`, { headers: { 'Accept-Language': 'en-IN,en' } });
+  if (!response.ok) throw new Error('Geocoding unavailable');
+  return response.json();
+}
+
+function usePlace(place, input, suggestions) {
+  input.value = place.display_name;
+  input.dataset.lat = place.lat;
+  input.dataset.lon = place.lon;
+  input.dataset.placeName = place.display_name;
+  suggestions.classList.remove('visible');
+}
+
 async function geocode(query, input, suggestions) {
   if (!query.trim()) return;
   suggestions.innerHTML = '<div class="suggestion">Searching...</div>'; suggestions.classList.add('visible');
   try {
-    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&addressdetails=1&q=${encodeURIComponent(query)}`, { headers: { 'Accept-Language': 'en' } });
-    if (!response.ok) throw new Error('Geocoding unavailable');
-    const places = await response.json();
+    const places = await searchPlaces(query);
     suggestions.innerHTML = places.length ? places.map((place, index) => `<button type="button" class="suggestion" data-index="${index}">${place.display_name}</button>`).join('') : '<div class="suggestion">No places found. Try a nearby landmark.</div>';
-    suggestions.querySelectorAll('button').forEach((button) => button.addEventListener('click', () => { const place = places[button.dataset.index]; input.value = place.display_name; input.dataset.lat = place.lat; input.dataset.lon = place.lon; suggestions.classList.remove('visible'); }));
+    suggestions.querySelectorAll('button').forEach((button) => button.addEventListener('click', () => usePlace(places[button.dataset.index], input, suggestions)));
   } catch (error) { suggestions.innerHTML = '<div class="suggestion">Could not search right now. Check your connection.</div>'; }
+}
+
+async function resolveTypedPlace(input) {
+  if (input.dataset.lat && input.dataset.lon) return { lat: Number(input.dataset.lat), lon: Number(input.dataset.lon), name: input.dataset.placeName || input.value };
+  const places = await searchPlaces(input.value);
+  if (!places.length) throw new Error(`Could not find “${input.value}”. Try a nearby landmark or area.`);
+  const place = places[0];
+  usePlace(place, input, document.querySelector(`#${input.id}-suggestions`));
+  return { lat: Number(place.lat), lon: Number(place.lon), name: place.display_name };
 }
 
 ['origin', 'destination'].forEach((name) => {
   const input = $(`#${name}`); const suggestions = $(`#${name}-suggestions`); let timer;
-  input.addEventListener('input', () => { input.dataset.lat = ''; clearTimeout(timer); if (input.value.length < 3) { suggestions.classList.remove('visible'); return; } timer = setTimeout(() => geocode(input.value, input, suggestions), 450); });
+  input.addEventListener('input', () => { input.dataset.lat = ''; input.dataset.lon = ''; input.dataset.placeName = ''; clearTimeout(timer); if (input.value.length < 2) { suggestions.classList.remove('visible'); return; } timer = setTimeout(() => geocode(input.value, input, suggestions), 350); });
   input.addEventListener('keydown', (event) => { if (event.key === 'Enter' && suggestions.querySelector('button')) { event.preventDefault(); suggestions.querySelector('button').click(); } });
-  $(`[data-clear="${name}"]`).addEventListener('click', () => { input.value = ''; input.dataset.lat = ''; input.focus(); });
+  $(`[data-clear="${name}"]`).addEventListener('click', () => { input.value = ''; input.dataset.lat = ''; input.dataset.lon = ''; input.dataset.placeName = ''; input.focus(); });
 });
 document.addEventListener('click', (event) => { if (!event.target.closest('.location-field')) document.querySelectorAll('.suggestions').forEach((item) => item.classList.remove('visible')); });
 
@@ -98,7 +119,7 @@ async function fetchRoute(origin, destination) {
   const url = `https://router.project-osrm.org/route/v1/driving/${origin.lon},${origin.lat};${destination.lon},${destination.lat}?overview=full&geometries=geojson&steps=false`;
   const response = await fetch(url); if (!response.ok) throw new Error('Route service unavailable'); const data = await response.json(); if (data.code !== 'Ok' || !data.routes?.length) throw new Error('No drivable route found'); return data.routes[0];
 }
-$('#route-form').addEventListener('submit', async (event) => { event.preventDefault(); const button = event.target.querySelector('.primary-btn'); const originInput = $('#origin'); const destinationInput = $('#destination'); if (!originInput.dataset.lat || !destinationInput.dataset.lat) { alert('Please choose both locations from the search suggestions.'); return; } button.disabled = true; button.querySelector('span').textContent = 'Reading the road…'; try { const start = parseDate(departureInput.value); const duration = Number($('#duration').value) || 45; const origin = { lat: Number(originInput.dataset.lat), lon: Number(originInput.dataset.lon) }; const destination = { lat: Number(destinationInput.dataset.lat), lon: Number(destinationInput.dataset.lon) }; const route = await fetchRoute(origin, destination); const points = route.geometry.coordinates.map(([lon, lat]) => [lat, lon]); const segments = makeSegments(points, start, duration); showResult({ segments, duration, distance: route.distance / 1000, points, start, routeName: destinationInput.value.split(',')[0] }); } catch (error) { alert(error.message || 'Could not calculate this route.'); } finally { button.disabled = false; button.querySelector('span').textContent = 'Find my shade'; } });
+$('#route-form').addEventListener('submit', async (event) => { event.preventDefault(); const button = event.target.querySelector('.primary-btn'); const originInput = $('#origin'); const destinationInput = $('#destination'); if (!originInput.value.trim() || !destinationInput.value.trim()) { alert('Enter both a starting point and destination.'); return; } button.disabled = true; button.querySelector('span').textContent = 'Finding your places…'; try { const start = parseDate(departureInput.value); const duration = Number($('#duration').value) || 45; const origin = await resolveTypedPlace(originInput); const destination = await resolveTypedPlace(destinationInput); button.querySelector('span').textContent = 'Reading the road…'; const route = await fetchRoute(origin, destination); const points = route.geometry.coordinates.map(([lon, lat]) => [lat, lon]); const segments = makeSegments(points, start, duration); showResult({ segments, duration, distance: route.distance / 1000, points, start, routeName: destination.name.split(',')[0] }); } catch (error) { alert(error.message || 'Could not calculate this route.'); } finally { button.disabled = false; button.querySelector('span').textContent = 'Find my shade'; } });
 $('#compass-form').addEventListener('submit', async (event) => { event.preventDefault(); const start = parseDate($('#compass-time').value); const bearing = Number($('#direction').value); const location = await browserLocation(); const localSun = sunReading(location.latitude, location.longitude, start); showResult({ segments: [{ bearing, sun: localSun, recommendation: recommendation(bearing, localSun), time: start }], duration: 5, distance: 0, start }); });
 $('#reset-btn').addEventListener('click', () => { $('#result').hidden = true; window.scrollTo({ top: 0, behavior: 'smooth' }); });
 document.querySelector('.details-panel').addEventListener('toggle', (event) => { if (event.target.open && state.map) setTimeout(() => state.map.invalidateSize(), 50); });
