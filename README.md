@@ -18,16 +18,18 @@ ShadeRoute helps bus and car passengers choose the cooler side of a vehicle. It 
 - Responsive mobile-first interface with a Leaflet route map
 
 ShadeRoute is a geometry-based tool. It does not use weather data, so cloud cover is not part of the calculation.
+The frontend is built with React and Vite. GitHub Actions installs dependencies, creates the production build, and deploys the generated `dist` directory to GitHub Pages.
 
 ## Run Locally
 
-No build step or package installation is required.
+Install Node.js 20 or newer, then install dependencies and start the Vite development server.
 
 ```powershell
-python -m http.server 4173
+npm install
+npm run dev
 ```
 
-Open <http://localhost:4173> in a browser.
+Open the URL printed by Vite in a browser.
 
 ## Data Sources
 
@@ -38,4 +40,4 @@ Open <http://localhost:4173> in a browser.
 
 ## Deployment
 
-The repository includes a GitHub Actions workflow at `.github/workflows/deploy-pages.yml` that deploys the static site to GitHub Pages whenever changes are pushed to `main`.
+The repository includes a GitHub Actions workflow at `.github/workflows/deploy-pages.yml`. On every push to `main`, it installs dependencies with `npm ci`, runs `npm run build`, uploads `dist`, and deploys the artifact to GitHub Pages.
