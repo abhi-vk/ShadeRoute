@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102c2b">
+  <title>ShadeRoute | Find the cooler side</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="ShadeRoute home"><span class="brand-mark">☼</span><span>ShadeRoute</span></a>
+      <span class="status-chip"><span class="status-dot"></span> geometry, not weather</span>
+    </header>
+
+    <section class="intro">
+      <p class="eyebrow">Your window-side navigator</p>
+      <h1>Catch the shade.<br><em>Skip the glare.</em></h1>
+      <p class="intro-copy">Find the cooler side of your bus or car by matching your route to the sun's path.</p>
+    </section>
+
+    <section class="planner panel" aria-labelledby="planner-title">
+      <div class="panel-heading">
+        <div><p class="section-kicker">Plan a journey</p><h2 id="planner-title">Where are you headed?</h2></div>
+        <span class="step-badge">01 / 01</span>
+      </div>
+      <div class="mode-tabs" role="tablist" aria-label="Travel mode">
+        <button class="mode-tab active" data-mode="route" role="tab" aria-selected="true">Route planner</button>
+        <button class="mode-tab" data-mode="compass" role="tab" aria-selected="false">I know my direction</button>
+      </div>
+
+      <form id="route-form" class="form-grid">
+        <div class="field location-field">
+          <label for="origin">Starting point</label>
+          <div class="input-wrap"><span class="field-icon origin-icon"></span><input id="origin" autocomplete="off" placeholder="e.g. Union Station, Chicago" required><button type="button" class="clear-btn" data-clear="origin" aria-label="Clear starting point">×</button></div>
+          <div class="suggestions" id="origin-suggestions"></div>
+        </div>
+        <div class="route-connector" aria-hidden="true"><span></span></div>
+        <div class="field location-field">
+          <label for="destination">Destination</label>
+          <div class="input-wrap"><span class="field-icon destination-icon"></span><input id="destination" autocomplete="off" placeholder="e.g. Navy Pier, Chicago" required><button type="button" class="clear-btn" data-clear="destination" aria-label="Clear destination">×</button></div>
+          <div class="suggestions" id="destination-suggestions"></div>
+        </div>
+        <div class="field"><label for="departure">Departure</label><input id="departure" type="datetime-local" required></div>
+        <div class="field"><label for="duration">Expected duration <span class="optional">optional</span></label><div class="unit-input"><input id="duration" type="number" min="1" max="1440" value="45"><span>min</span></div></div>
+        <button class="primary-btn" type="submit"><span>Find my shade</span><span class="button-arrow">↗</span></button>
+      </form>
+
+      <form id="compass-form" class="form-grid compass-form" hidden>
+        <div class="field"><label for="direction">Traveling roughly</label><select id="direction"><option value="0">North</option><option value="45">North-east</option><option value="90">East</option><option value="135">South-east</option><option value="180">South</option><option value="225">South-west</option><option value="270">West</option><option value="315">North-west</option></select></div>
+        <div class="field"><label for="compass-time">At this time</label><input id="compass-time" type="datetime-local" required></div>
+        <button class="primary-btn" type="submit"><span>Find my shade</span><span class="button-arrow">↗</span></button>
+      </form>
+      <p class="form-note"><span>✦</span> Cloud cover doesn't affect the calculation. This is pure sun geometry.</p>
+    </section>
+
+    <section id="result" class="result-section" hidden aria-live="polite">
+      <div class="result-head"><div><p class="section-kicker">Your shade report</p><h2 id="result-title">Sit on the right side.</h2><p id="result-summary" class="result-summary"></p></div><div id="sun-status" class="sun-status"></div></div>
+      <div class="seat-visual panel">
+        <div class="visual-label left-label">LEFT</div><div class="visual-label right-label">RIGHT</div>
+        <div class="sun-orbit"><span class="sun-glyph">☼</span></div>
+        <div class="vehicle" aria-label="Top-down view of a vehicle"><div class="windshield"></div><div class="seat-row front"><i></i><i></i></div><div class="aisle"></div><div class="seat-row"><i></i><i></i></div><div class="seat-row"><i></i><i></i></div><div class="seat-row"><i></i><i></i></div><div class="seat-row back"><i></i><i></i></div></div>
+        <div class="seat-callout" id="seat-callout"><span class="callout-line"></span><strong id="seat-callout-text">Best shaded seat</strong></div>
+      </div>
+      <div class="metrics"><div><span class="metric-label">Sun direction</span><strong id="sun-direction">—</strong></div><div><span class="metric-label">Sun altitude</span><strong id="sun-altitude">—</strong></div><div><span class="metric-label">Route bends</span><strong id="route-bends">—</strong></div></div>
+      <details class="details-panel"><summary><span>See the journey timeline</span><span class="summary-arrow">⌄</span></summary><div id="timeline" class="timeline"></div><div id="map" class="map"></div></details>
+      <button class="reset-btn" id="reset-btn" type="button">Plan another journey <span>↗</span></button>
+    </section>
+    <footer><span>Built for window-seat optimists</span><span>Data: OpenStreetMap · OSRM · SunCalc</span></footer>
+  </main>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.9.0/suncalc.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
