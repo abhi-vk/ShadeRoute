@@ -4,7 +4,7 @@ ShadeRoute helps bus and car passengers choose the cooler side of a vehicle. It 
 
 ## Live Demo
 
-[Open ShadeRoute on GitHub Pages](https://abhi-vk.github.io/Shadow_App/)
+[Open ShadeRoute on GitHub Pages](https://abhi-vk.github.io/ShadeRoute/)
 
 ## Features
 
