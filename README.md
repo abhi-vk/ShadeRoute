@@ -35,6 +35,8 @@ Open the URL printed by Vite in a browser.
 
 This project is also containerized so it can run the same way on any machine with Docker installed.
 
+See the complete [Docker guide](docs/DOCKER.md) for building from GitHub, publishing to Docker Hub, and running the published image.
+
 ```powershell
 docker build -t shaderoute .
 docker run --rm -p 5173:5173 shaderoute
