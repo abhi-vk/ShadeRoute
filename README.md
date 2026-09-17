@@ -31,6 +31,17 @@ npm run dev
 
 Open the URL printed by Vite in a browser.
 
+## Run with Docker
+
+This project is also containerized so it can run the same way on any machine with Docker installed.
+
+```powershell
+docker build -t shaderoute .
+docker run --rm -p 5173:5173 shaderoute
+```
+
+Then open http://localhost:5173 in your browser.
+
 ## Data Sources
 
 - [OpenStreetMap Nominatim](https://nominatim.openstreetmap.org/) for place search
