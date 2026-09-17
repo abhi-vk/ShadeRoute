@@ -109,7 +109,7 @@ function getRecentLocations() {
   }
 }
 
-function LocationField({ label, name, placeholder, value, setValue, setPlace, recentLocations, onSelectRecent }) {
+function LocationField({ label, name, placeholder, value, setValue, setPlace, recentLocations, onSelectRecent, onClearRecent }) {
   const [suggestions, setSuggestions] = useState([]);
   const [searching, setSearching] = useState(false);
   const timer = useRef();
@@ -184,7 +184,10 @@ function LocationField({ label, name, placeholder, value, setValue, setPlace, re
 
               {suggestions.length === 0 && recentLocations.length > 0 && (
                 <>
-                  <div className="suggestion suggestion-label">Recent locations</div>
+                  <div className="suggestion suggestion-label">
+                    <span>Recent locations</span>
+                    <button type="button" className="clear-recent-btn" onClick={onClearRecent}>Clear</button>
+                  </div>
                   {recentLocations.map((item) => (
                     <button
                       type="button"
@@ -264,6 +267,11 @@ export default function App() {
 
       return trimmed;
     });
+  };
+
+  const clearRecentLocations = () => {
+    setRecentLocations([]);
+    localStorage.removeItem(STORAGE_KEY);
   };
 
   const resolvePlace = async (text, selected) => {
@@ -414,6 +422,7 @@ export default function App() {
               setValue={setOrigin}
               setPlace={setOriginPlace}
               recentLocations={recentLocations}
+              onClearRecent={clearRecentLocations}
               onSelectRecent={(place) => {
                 setOrigin(place.display_name);
                 setOriginPlace(place);
@@ -430,6 +439,7 @@ export default function App() {
               setValue={setDestination}
               setPlace={setDestinationPlace}
               recentLocations={recentLocations}
+              onClearRecent={clearRecentLocations}
               onSelectRecent={(place) => {
                 setDestination(place.display_name);
                 setDestinationPlace(place);

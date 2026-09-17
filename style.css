@@ -263,15 +263,17 @@ input, select {
 }
 
 .suggestions {
-  position: absolute;
-  z-index: 20;
+  position: static;
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 7px;
   box-shadow: 0 12px 30px rgba(16, 44, 43, 0.12);
-  width: calc(50% - 9px);
+  width: 100%;
   display: none;
   overflow: hidden;
+  max-height: 240px;
+  overflow-y: auto;
+  margin-top: 6px;
 }
 
 .suggestions.visible {
@@ -295,12 +297,31 @@ input, select {
 }
 
 .suggestion-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-size: 0.7rem;
   font-weight: 700;
   background: #f7f4ee;
+}
+
+.clear-recent-btn {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--green);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.clear-recent-btn:hover {
+  color: var(--orange);
 }
 
 .route-connector {
@@ -679,7 +700,6 @@ footer {
     top: -10px;
   }
 
-  .suggestions { width: calc(100% - 34px); }
   .primary-btn { width: 100%; }
 
   .result-section { padding-top: 55px; }
