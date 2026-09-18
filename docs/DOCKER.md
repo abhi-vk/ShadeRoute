@@ -20,45 +20,17 @@ docker --version
 docker run hello-world
 ```
 
-## Build or Pull?
-
-Use `docker build` when you want to create an image from the local source code and `Dockerfile`:
-
-```powershell
-docker build -t shaderoute:v2 .
-```
-
-Use `docker pull` when you want to download an image that has already been published to Docker Hub:
-
-```powershell
-docker pull abhivk/shaderoute:v2
-```
+## Choose a Workflow
 
 | Situation | Use |
 | --- | --- |
-| You changed `Dockerfile` or application source code | `docker build` |
-| You want to test your local changes | `docker build`, then `docker run` |
-| Someone else published a new Docker image | `docker pull` |
-| You want to run the existing `v2` image | `docker pull`, then `docker run` |
-| You want to publish your local image | `docker build`, `docker tag`, then `docker push` |
+| I changed the source code or `Dockerfile` | Build locally |
+| I only want to run the published app | Pull from Docker Hub |
+| I want to publish a new version | Build, tag, and push |
 
-`docker build` reads the local `Dockerfile`; it does not use your published application image. It may download the base images in the Dockerfile. `docker pull` downloads the finished image from Docker Hub; it does not read your local files or Dockerfile.
+`docker build` reads your local files and creates a new image. `docker pull` downloads an existing image; it does not read your local files or `Dockerfile`.
 
-If you change the Dockerfile or source code, rebuild before running:
-
-```powershell
-docker build -t shaderoute:v2 .
-docker run --rm -p 5173:8080 shaderoute:v2
-```
-
-If you only want to run the published image:
-
-```powershell
-docker pull abhivk/shaderoute:v2
-docker run --rm -p 5173:8080 abhivk/shaderoute:v2
-```
-
-The `v2` part is an image tag that identifies a version. Building with the same tag replaces the local tag; pushing with the same tag updates the Docker Hub tag.
+The `v2` value is an image tag that identifies this release version.
 
 ## Option 1: Build from GitHub
 
@@ -69,8 +41,6 @@ This option downloads the source code and builds a local Docker image.
 ```powershell
 git clone https://github.com/abhi-vk/ShadeRoute.git
 ```
-
-This creates a local `ShadeRoute` directory containing the project source code.
 
 ### 2. Enter the project directory
 
@@ -292,14 +262,6 @@ An error such as `lookup registry-1.docker.io: no such host` indicates a Docker 
 ```powershell
 docker pull node:20-alpine
 docker pull nginxinc/nginx-unprivileged:1.27-alpine
-```
-
-### Use the published v2 image
-
-Pull the latest version before running it:
-
-```powershell
-docker pull abhivk/shaderoute:v2
 ```
 
 The application still needs internet access at runtime because location search, route calculation, map tiles, and sun-related data use external services.
