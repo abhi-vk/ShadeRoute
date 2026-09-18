@@ -20,6 +20,46 @@ docker --version
 docker run hello-world
 ```
 
+## Build or Pull?
+
+Use `docker build` when you want to create an image from the local source code and `Dockerfile`:
+
+```powershell
+docker build -t shaderoute:v2 .
+```
+
+Use `docker pull` when you want to download an image that has already been published to Docker Hub:
+
+```powershell
+docker pull abhivk/shaderoute:v2
+```
+
+| Situation | Use |
+| --- | --- |
+| You changed `Dockerfile` or application source code | `docker build` |
+| You want to test your local changes | `docker build`, then `docker run` |
+| Someone else published a new Docker image | `docker pull` |
+| You want to run the existing `v2` image | `docker pull`, then `docker run` |
+| You want to publish your local image | `docker build`, `docker tag`, then `docker push` |
+
+`docker build` reads the local `Dockerfile`; it does not use your published application image. It may download the base images in the Dockerfile. `docker pull` downloads the finished image from Docker Hub; it does not read your local files or Dockerfile.
+
+If you change the Dockerfile or source code, rebuild before running:
+
+```powershell
+docker build -t shaderoute:v2 .
+docker run --rm -p 5173:8080 shaderoute:v2
+```
+
+If you only want to run the published image:
+
+```powershell
+docker pull abhivk/shaderoute:v2
+docker run --rm -p 5173:8080 abhivk/shaderoute:v2
+```
+
+The `v2` part is an image tag that identifies a version. Building with the same tag replaces the local tag; pushing with the same tag updates the Docker Hub tag.
+
 ## Option 1: Build from GitHub
 
 This option downloads the source code and builds a local Docker image.
@@ -46,6 +86,8 @@ docker build -t shaderoute:v2 .
 
 The `-t shaderoute:v2` option gives the image a name and version tag. The final `.` tells Docker to use the current directory as the build context and to read its `Dockerfile`.
 
+The multi-stage Dockerfile first installs dependencies and creates the Vite `dist` output. Its final stage contains only the generated static files and an Nginx web server.
+
 Check that the image was created:
 
 ```powershell
@@ -59,6 +101,13 @@ docker run --rm --name shaderoute-app -p 5173:8080 shaderoute:v2
 ```
 
 The `-p 5173:8080` option maps port `5173` on your computer to port `8080` inside the container. Nginx serves the production build on port `8080`.
+
+The options mean:
+
+- `--rm`: remove the stopped container automatically.
+- `--name shaderoute-app`: give the container a predictable name.
+- `-p 5173:8080`: map the host port to the container port.
+- `shaderoute:v2`: run the `shaderoute` image with the `v2` tag.
 
 Open the application at:
 
@@ -131,6 +180,8 @@ After the push completes, the image is available at:
 
 <https://hub.docker.com/r/abhivk/shaderoute>
 
+Docker uploads only layers that are not already present in the repository. Unchanged layers may be reported as already existing.
+
 ## Option 2: Download and Run from Docker Hub
 
 This is the workflow for another developer or user who wants to run the published application without cloning the source code or building an image.
@@ -143,6 +194,8 @@ docker pull abhivk/shaderoute:v2
 
 Docker downloads the image layers from Docker Hub and stores them locally.
 
+If the tag is already available locally, Docker may report that the image is up to date.
+
 ### 2. Start the application
 
 ```powershell
@@ -154,6 +207,8 @@ Open:
 <http://localhost:5173>
 
 Stop the application with `Ctrl+C`.
+
+This workflow does not require the GitHub repository, Node.js, or a local build. It requires Docker and internet access for the image download and for the app's external map, search, and routing services.
 
 ### 3. Run in the background (optional)
 
@@ -206,6 +261,37 @@ For a background container:
 
 ```powershell
 docker logs shaderoute-app
+```
+
+### Inspect images and containers
+
+List local images:
+
+```powershell
+docker image ls
+```
+
+List running containers:
+
+```powershell
+docker ps
+```
+
+Inspect image configuration:
+
+```powershell
+docker image inspect abhivk/shaderoute:v2
+```
+
+### Docker Hub or base-image network error
+
+During `docker build`, Docker must reach Docker Hub to download `node:20-alpine` and `nginxinc/nginx-unprivileged:1.27-alpine`. During `docker pull`, it must reach Docker Hub to download `abhivk/shaderoute:v2`.
+
+An error such as `lookup registry-1.docker.io: no such host` indicates a Docker Desktop DNS, proxy, VPN, firewall, or network problem. Restart Docker Desktop, check its proxy settings, temporarily disconnect a VPN, or try another network. Test the base images directly:
+
+```powershell
+docker pull node:20-alpine
+docker pull nginxinc/nginx-unprivileged:1.27-alpine
 ```
 
 ### Use the published v2 image
