@@ -41,10 +41,10 @@ cd ShadeRoute
 ### 3. Build the Docker image
 
 ```powershell
-docker build -t shaderoute:latest .
+docker build -t shaderoute:v2 .
 ```
 
-The `-t shaderoute:latest` option gives the image a name and tag. The final `.` tells Docker to use the current directory as the build context and to read its `Dockerfile`.
+The `-t shaderoute:v2` option gives the image a name and version tag. The final `.` tells Docker to use the current directory as the build context and to read its `Dockerfile`.
 
 Check that the image was created:
 
@@ -55,7 +55,7 @@ docker image ls shaderoute
 ### 4. Start the application
 
 ```powershell
-docker run --rm --name shaderoute-app -p 5173:8080 shaderoute:latest
+docker run --rm --name shaderoute-app -p 5173:8080 shaderoute:v2
 ```
 
 The `-p 5173:8080` option maps port `5173` on your computer to port `8080` inside the container. Nginx serves the production build on port `8080`.
@@ -69,7 +69,7 @@ Keep the terminal open while using the application. Stop it with `Ctrl+C`.
 ### 5. Run in the background (optional)
 
 ```powershell
-docker run -d --name shaderoute-app -p 5173:8080 shaderoute:latest
+docker run -d --name shaderoute-app -p 5173:8080 shaderoute:v2
 ```
 
 View the container:
@@ -96,13 +96,13 @@ Create a public repository named `shaderoute` at <https://hub.docker.com/>.
 The image name must use this format:
 
 ```text
-DOCKERHUB_USERNAME/shaderoute:latest
+DOCKERHUB_USERNAME/shaderoute:v2
 ```
 
 For this project, the published image name is:
 
 ```text
-abhivk/shaderoute:latest
+abhivk/shaderoute:v2
 ```
 
 ### 2. Sign in to Docker Hub
@@ -116,7 +116,7 @@ Use a Docker Hub access token instead of your account password when prompted. Ne
 ### 3. Tag the local image
 
 ```powershell
-docker tag shaderoute:latest abhivk/shaderoute:latest
+docker tag shaderoute:v2 abhivk/shaderoute:v2
 ```
 
 Replace `abhivk` with your Docker Hub username when publishing from another account.
@@ -124,7 +124,7 @@ Replace `abhivk` with your Docker Hub username when publishing from another acco
 ### 4. Push the image
 
 ```powershell
-docker push abhivk/shaderoute:latest
+docker push abhivk/shaderoute:v2
 ```
 
 After the push completes, the image is available at:
@@ -138,7 +138,7 @@ This is the workflow for another developer or user who wants to run the publishe
 ### 1. Download the image
 
 ```powershell
-docker pull abhivk/shaderoute:latest
+docker pull abhivk/shaderoute:v2
 ```
 
 Docker downloads the image layers from Docker Hub and stores them locally.
@@ -146,7 +146,7 @@ Docker downloads the image layers from Docker Hub and stores them locally.
 ### 2. Start the application
 
 ```powershell
-docker run --rm --name shaderoute-app -p 5173:8080 abhivk/shaderoute:latest
+docker run --rm --name shaderoute-app -p 5173:8080 abhivk/shaderoute:v2
 ```
 
 Open:
@@ -158,7 +158,7 @@ Stop the application with `Ctrl+C`.
 ### 3. Run in the background (optional)
 
 ```powershell
-docker run -d --name shaderoute-app -p 5173:8080 abhivk/shaderoute:latest
+docker run -d --name shaderoute-app -p 5173:8080 abhivk/shaderoute:v2
 ```
 
 Stop it later with:
@@ -171,12 +171,12 @@ docker stop shaderoute-app
 
 | Task | Command |
 | --- | --- |
-| Build locally | `docker build -t shaderoute:latest .` |
-| Run local image | `docker run --rm -p 5173:8080 shaderoute:latest` |
-| Tag for Docker Hub | `docker tag shaderoute:latest abhivk/shaderoute:latest` |
-| Upload image | `docker push abhivk/shaderoute:latest` |
-| Download image | `docker pull abhivk/shaderoute:latest` |
-| Run Docker Hub image | `docker run --rm -p 5173:8080 abhivk/shaderoute:latest` |
+| Build locally | `docker build -t shaderoute:v2 .` |
+| Run local image | `docker run --rm -p 5173:8080 shaderoute:v2` |
+| Tag for Docker Hub | `docker tag shaderoute:v2 abhivk/shaderoute:v2` |
+| Upload image | `docker push abhivk/shaderoute:v2` |
+| Download image | `docker pull abhivk/shaderoute:v2` |
+| Run Docker Hub image | `docker run --rm -p 5173:8080 abhivk/shaderoute:v2` |
 
 ## Troubleshooting
 
@@ -185,7 +185,7 @@ docker stop shaderoute-app
 Use another host port, such as `8080`:
 
 ```powershell
-docker run --rm -p 8080:8080 abhivk/shaderoute:latest
+docker run --rm -p 8080:8080 abhivk/shaderoute:v2
 ```
 
 Then open <http://localhost:8080>.
@@ -208,12 +208,12 @@ For a background container:
 docker logs shaderoute-app
 ```
 
-### Use the latest published image
+### Use the published v2 image
 
 Pull the latest version before running it:
 
 ```powershell
-docker pull abhivk/shaderoute:latest
+docker pull abhivk/shaderoute:v2
 ```
 
 The application still needs internet access at runtime because location search, route calculation, map tiles, and sun-related data use external services.
