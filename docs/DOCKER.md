@@ -55,10 +55,10 @@ docker image ls shaderoute
 ### 4. Start the application
 
 ```powershell
-docker run --rm --name shaderoute-app -p 5173:5173 shaderoute:latest
+docker run --rm --name shaderoute-app -p 5173:8080 shaderoute:latest
 ```
 
-The `-p 5173:5173` option maps port `5173` on your computer to port `5173` inside the container.
+The `-p 5173:8080` option maps port `5173` on your computer to port `8080` inside the container. Nginx serves the production build on port `8080`.
 
 Open the application at:
 
@@ -69,7 +69,7 @@ Keep the terminal open while using the application. Stop it with `Ctrl+C`.
 ### 5. Run in the background (optional)
 
 ```powershell
-docker run -d --name shaderoute-app -p 5173:5173 shaderoute:latest
+docker run -d --name shaderoute-app -p 5173:8080 shaderoute:latest
 ```
 
 View the container:
@@ -146,7 +146,7 @@ Docker downloads the image layers from Docker Hub and stores them locally.
 ### 2. Start the application
 
 ```powershell
-docker run --rm --name shaderoute-app -p 5173:5173 abhivk/shaderoute:latest
+docker run --rm --name shaderoute-app -p 5173:8080 abhivk/shaderoute:latest
 ```
 
 Open:
@@ -158,7 +158,7 @@ Stop the application with `Ctrl+C`.
 ### 3. Run in the background (optional)
 
 ```powershell
-docker run -d --name shaderoute-app -p 5173:5173 abhivk/shaderoute:latest
+docker run -d --name shaderoute-app -p 5173:8080 abhivk/shaderoute:latest
 ```
 
 Stop it later with:
@@ -172,11 +172,11 @@ docker stop shaderoute-app
 | Task | Command |
 | --- | --- |
 | Build locally | `docker build -t shaderoute:latest .` |
-| Run local image | `docker run --rm -p 5173:5173 shaderoute:latest` |
+| Run local image | `docker run --rm -p 5173:8080 shaderoute:latest` |
 | Tag for Docker Hub | `docker tag shaderoute:latest abhivk/shaderoute:latest` |
 | Upload image | `docker push abhivk/shaderoute:latest` |
 | Download image | `docker pull abhivk/shaderoute:latest` |
-| Run Docker Hub image | `docker run --rm -p 5173:5173 abhivk/shaderoute:latest` |
+| Run Docker Hub image | `docker run --rm -p 5173:8080 abhivk/shaderoute:latest` |
 
 ## Troubleshooting
 
@@ -185,7 +185,7 @@ docker stop shaderoute-app
 Use another host port, such as `8080`:
 
 ```powershell
-docker run --rm -p 8080:5173 abhivk/shaderoute:latest
+docker run --rm -p 8080:8080 abhivk/shaderoute:latest
 ```
 
 Then open <http://localhost:8080>.
