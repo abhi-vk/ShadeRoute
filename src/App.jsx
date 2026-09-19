@@ -301,7 +301,8 @@ export default function App() {
   const [destinationPlace, setDestinationPlace] = useState(null);
   const [departure, setDeparture] = useState(defaultDate);
   const [compassTime, setCompassTime] = useState(defaultDate);
-  const [duration, setDuration] = useState(45);
+  const [duration, setDuration] = useState('');
+  const [durationEdited, setDurationEdited] = useState(false);
   const [direction, setDirection] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -367,7 +368,12 @@ export default function App() {
       if (data.code !== 'Ok') throw new Error('No drivable route found');
 
       const points = data.routes[0].geometry.coordinates.map(([lon, lat]) => [lat, lon]);
-      const calculatedDuration = Number(duration) || 45;
+      const routeDuration = Math.max(1, Math.round(data.routes[0].duration / 60));
+      const manualDuration = Number(duration);
+      const calculatedDuration = durationEdited && manualDuration > 0 ? manualDuration : routeDuration;
+
+      setDuration(calculatedDuration);
+      setDurationEdited(durationEdited && manualDuration > 0);
 
       setReport({
         segments: makeSegments(points, start, calculatedDuration),
@@ -521,10 +527,21 @@ export default function App() {
 
             <div className="field">
               <label htmlFor="duration">
-                Expected duration <span className="optional">optional</span>
+                Expected duration <span className="optional">auto-estimated</span>
               </label>
               <div className="unit-input">
-                <input id="duration" type="number" min="1" max="1440" value={duration} onChange={(event) => setDuration(event.target.value)} />
+                <input
+                  id="duration"
+                  type="number"
+                  min="1"
+                  max="1440"
+                  value={duration}
+                  placeholder="After route"
+                  onChange={(event) => {
+                    setDuration(event.target.value);
+                    setDurationEdited(true);
+                  }}
+                />
                 <span>min</span>
               </div>
             </div>
