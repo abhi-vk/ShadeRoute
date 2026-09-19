@@ -39,10 +39,10 @@ const recommendation = (travelBearing, sun) => {
   return { side: sunSide === 'RIGHT' ? 'LEFT' : 'RIGHT', sunSide };
 };
 
-async function searchPlaces(query) {
+async function searchPlaces(query, signal) {
   const encoded = encodeURIComponent(query);
 
-  const photon = fetch(`https://photon.komoot.io/api/?q=${encoded}&limit=8&lang=en`).then(async (response) => {
+  const photon = fetch(`https://photon.komoot.io/api/?q=${encoded}&limit=8&lang=en`, { signal }).then(async (response) => {
     if (!response.ok) throw new Error();
     const data = await response.json();
     return (data.features || [])
@@ -60,7 +60,7 @@ async function searchPlaces(query) {
 
   const nominatim = fetch(
     `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=8&addressdetails=1&namedetails=1&q=${encoded}`,
-    { headers: { 'Accept-Language': 'en-IN,en' } },
+    { headers: { 'Accept-Language': 'en-IN,en' }, signal },
   ).then(async (response) => {
     if (!response.ok) throw new Error();
     return response.json();
@@ -77,9 +77,17 @@ async function searchPlaces(query) {
       if (!unique.has(key)) unique.set(key, place);
     });
 
-  const words = query.toLowerCase().split(/[^a-z0-9]+/).filter((word) => word.length > 2);
-  const score = (place) => words.reduce((total, word) => total + (place.display_name.toLowerCase().includes(word) ? 1 : 0), 0);
-  return [...unique.values()].sort((a, b) => score(b) - score(a)).slice(0, 10);
+  const normalizedQuery = query.trim().toLowerCase();
+  const words = normalizedQuery.split(/[^a-z0-9]+/).filter((word) => word.length > 1);
+  const score = (place) => {
+    const name = place.display_name.toLowerCase();
+    const exactStart = name.startsWith(normalizedQuery) ? 12 : 0;
+    const exactPhrase = name.includes(normalizedQuery) ? 6 : 0;
+    const matchedWords = words.reduce((total, word) => total + (name.includes(word) ? 2 : 0), 0);
+    return exactStart + exactPhrase + matchedWords;
+  };
+
+  return [...unique.values()].sort((a, b) => score(b) - score(a) || a.display_name.localeCompare(b.display_name)).slice(0, 8);
 }
 
 function makeSegments(points, start, duration) {
@@ -112,26 +120,40 @@ function getRecentLocations() {
 function LocationField({ label, name, placeholder, value, setValue, setPlace, recentLocations, onSelectRecent, onClearRecent }) {
   const [suggestions, setSuggestions] = useState([]);
   const [searching, setSearching] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const timer = useRef();
+  const request = useRef();
+
+  useEffect(() => () => {
+    clearTimeout(timer.current);
+    request.current?.abort();
+  }, []);
 
   const search = (text) => {
     clearTimeout(timer.current);
+    request.current?.abort();
     setValue(text);
     setPlace(null);
+    setActiveIndex(-1);
 
-    if (text.length < 2) {
+    if (text.trim().length < 2) {
       setSuggestions([]);
+      setSearching(false);
       return;
     }
 
     timer.current = setTimeout(async () => {
+      const controller = new AbortController();
+      request.current = controller;
       setSearching(true);
       try {
-        setSuggestions(await searchPlaces(text));
-      } catch {
-        setSuggestions([]);
+        const places = await searchPlaces(text, controller.signal);
+        if (!controller.signal.aborted) setSuggestions(places);
+      } catch (error) {
+        if (error.name !== 'AbortError') setSuggestions([]);
       } finally {
-        setSearching(false);
+        if (!controller.signal.aborted) setSearching(false);
       }
     }, 350);
   };
@@ -140,6 +162,38 @@ function LocationField({ label, name, placeholder, value, setValue, setPlace, re
     setValue(place.display_name);
     setPlace(place);
     setSuggestions([]);
+    setFocused(false);
+    setActiveIndex(-1);
+  };
+
+  const handleSelectRecent = (place) => {
+    onSelectRecent(place);
+    setFocused(false);
+    setActiveIndex(-1);
+  };
+
+  const recentItems = suggestions.length === 0 && !value.trim() ? recentLocations : [];
+  const selectableItems = suggestions.length > 0 ? suggestions : recentItems;
+  const showSuggestions = focused && (searching || selectableItems.length > 0);
+
+  const handleKeyDown = (event) => {
+    if (!showSuggestions) return;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setActiveIndex((current) => (current + 1) % selectableItems.length);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setActiveIndex((current) => (current - 1 + selectableItems.length) % selectableItems.length);
+    } else if (event.key === 'Enter' && activeIndex >= 0) {
+      event.preventDefault();
+      if (suggestions.length > 0) handleSelect(suggestions[activeIndex]);
+      else onSelectRecent(recentItems[activeIndex]);
+    } else if (event.key === 'Escape') {
+      setFocused(false);
+      setSuggestions([]);
+      setFocused(false);
+      setActiveIndex(-1);
+    }
   };
 
   return (
@@ -152,6 +206,11 @@ function LocationField({ label, name, placeholder, value, setValue, setPlace, re
           autoComplete="off"
           value={value}
           onChange={(event) => search(event.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setTimeout(() => setFocused(false), 150)}
+          onKeyDown={handleKeyDown}
+          aria-expanded={showSuggestions}
+          aria-controls={`${name}-suggestions`}
           placeholder={placeholder}
           required
         />
@@ -169,31 +228,29 @@ function LocationField({ label, name, placeholder, value, setValue, setPlace, re
         </button>
       </div>
 
-      {(searching || suggestions.length > 0 || recentLocations.length > 0) && (
-        <div className="suggestions visible">
+      {showSuggestions && (
+        <div className="suggestions visible" id={`${name}-suggestions`} role="listbox">
           {searching ? (
             <div className="suggestion">Searching...</div>
           ) : (
             <>
               {suggestions.length > 0 &&
-                suggestions.map((item) => (
-                  <button type="button" className="suggestion" key={`${item.lat}-${item.lon}`} onClick={() => handleSelect(item)}>
+                suggestions.map((item, index) => (
+                  <button type="button" role="option" aria-selected={activeIndex === index} className={`suggestion ${activeIndex === index ? 'active' : ''}`} key={`${item.lat}-${item.lon}`} onMouseDown={(event) => event.preventDefault()} onClick={() => handleSelect(item)}>
                     {item.display_name}
                   </button>
                 ))}
 
-              {suggestions.length === 0 && recentLocations.length > 0 && (
+              {suggestions.length === 0 && recentItems.length > 0 && (
                 <>
                   <div className="suggestion suggestion-label">
                     <span>Recent locations</span>
-                    <button type="button" className="clear-recent-btn" onClick={onClearRecent}>Clear</button>
+                    <button type="button" className="clear-recent-btn" onMouseDown={(event) => event.preventDefault()} onClick={onClearRecent}>Clear</button>
                   </div>
-                  {recentLocations.map((item) => (
-                    <button
-                      type="button"
-                      className="suggestion recent-item"
+                  {recentItems.map((item, index) => (
+                    <button type="button" role="option" aria-selected={activeIndex === index} className={`suggestion recent-item ${activeIndex === index ? 'active' : ''}`} onMouseDown={(event) => event.preventDefault()}
                       key={`${item.display_name}-${item.lat}-${item.lon}`}
-                      onClick={() => onSelectRecent(item)}
+                      onClick={() => handleSelectRecent(item)}
                     >
                       {item.display_name}
                     </button>
@@ -272,6 +329,13 @@ export default function App() {
   const clearRecentLocations = () => {
     setRecentLocations([]);
     localStorage.removeItem(STORAGE_KEY);
+  };
+
+  const swapLocations = () => {
+    setOrigin(destination);
+    setDestination(origin);
+    setOriginPlace(destinationPlace);
+    setDestinationPlace(originPlace);
   };
 
   const resolvePlace = async (text, selected) => {
@@ -423,13 +487,16 @@ export default function App() {
               setPlace={setOriginPlace}
               recentLocations={recentLocations}
               onClearRecent={clearRecentLocations}
+              onSwap={swapLocations}
               onSelectRecent={(place) => {
                 setOrigin(place.display_name);
                 setOriginPlace(place);
               }}
             />
 
-            <div className="route-connector" aria-hidden="true"><span></span></div>
+            <div className="route-connector">
+              <button type="button" className="swap-btn" onClick={swapLocations} aria-label="Swap starting point and destination" title="Swap locations">⇅</button>
+            </div>
 
             <LocationField
               label="Destination"
@@ -440,6 +507,7 @@ export default function App() {
               setPlace={setDestinationPlace}
               recentLocations={recentLocations}
               onClearRecent={clearRecentLocations}
+              onSwap={swapLocations}
               onSelectRecent={(place) => {
                 setDestination(place.display_name);
                 setDestinationPlace(place);

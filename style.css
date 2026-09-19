@@ -296,6 +296,10 @@ input, select {
   background: var(--mint);
 }
 
+.suggestion.active {
+  background: var(--mint);
+}
+
 .suggestion-label {
   display: flex;
   align-items: center;
@@ -325,7 +329,35 @@ input, select {
 }
 
 .route-connector {
-  display: none;
+  display: block;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.swap-btn {
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  transform: translateX(-50%);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--card);
+  color: var(--green);
+  font-size: 1.2rem;
+  line-height: 1;
+  box-shadow: 0 4px 12px rgba(16, 44, 43, 0.1);
+  pointer-events: auto;
+}
+
+.swap-btn:hover {
+  border-color: var(--green);
+  background: var(--mint);
 }
 
 .unit-input input {
@@ -685,19 +717,25 @@ footer {
   }
 
   .route-connector {
-    display: block;
-    height: 0;
     position: relative;
+    inset: auto;
+    height: 0;
     z-index: 1;
   }
 
-  .route-connector span {
-    display: block;
+  .route-connector::before {
+    content: '';
     position: absolute;
     height: 17px;
     border-left: 1px dashed var(--orange);
     left: 21px;
     top: -10px;
+  }
+
+  .swap-btn {
+    top: -28px;
+    left: 21px;
+    transform: translateX(-50%);
   }
 
   .primary-btn { width: 100%; }
