@@ -92,6 +92,10 @@ html.dark .secondary-btn {
   color: var(--ink);
 }
 
+html.dark .primary-btn {
+  color: #102c2b;
+}
+
 /* ── Base ─────────────────────────────────────── */
 html {
   background: var(--paper);

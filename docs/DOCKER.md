@@ -30,7 +30,7 @@ docker run hello-world
 
 `docker build` reads your local files and creates a new image. `docker pull` downloads an existing image; it does not read your local files or `Dockerfile`.
 
-The `v2` value is an image tag that identifies this release version.
+The `v3` value is an image tag that identifies this release. The previous `v2` tag remains available for rollback.
 
 ## Option 1: Build from GitHub
 
@@ -51,10 +51,10 @@ cd ShadeRoute
 ### 3. Build the Docker image
 
 ```powershell
-docker build -t shaderoute:v2 .
+docker build -t shaderoute:v3 .
 ```
 
-The `-t shaderoute:v2` option gives the image a name and version tag. The final `.` tells Docker to use the current directory as the build context and to read its `Dockerfile`.
+The `-t shaderoute:v3` option gives the image a name and version tag. The final `.` tells Docker to use the current directory as the build context and to read its `Dockerfile`.
 
 The multi-stage Dockerfile first installs dependencies and creates the Vite `dist` output. Its final stage contains only the generated static files and an Nginx web server.
 
@@ -67,7 +67,7 @@ docker image ls shaderoute
 ### 4. Start the application
 
 ```powershell
-docker run --rm --name shaderoute-app -p 5173:8080 shaderoute:v2
+docker run --rm --name shaderoute-app -p 5173:8080 shaderoute:v3
 ```
 
 The `-p 5173:8080` option maps port `5173` on your computer to port `8080` inside the container. Nginx serves the production build on port `8080`.
@@ -77,7 +77,7 @@ The options mean:
 - `--rm`: remove the stopped container automatically.
 - `--name shaderoute-app`: give the container a predictable name.
 - `-p 5173:8080`: map the host port to the container port.
-- `shaderoute:v2`: run the `shaderoute` image with the `v2` tag.
+- `shaderoute:v3`: run the `shaderoute` image with the `v3` tag.
 
 Open the application at:
 
@@ -88,7 +88,7 @@ Keep the terminal open while using the application. Stop it with `Ctrl+C`.
 ### 5. Run in the background (optional)
 
 ```powershell
-docker run -d --name shaderoute-app -p 5173:8080 shaderoute:v2
+docker run -d --name shaderoute-app -p 5173:8080 shaderoute:v3
 ```
 
 View the container:
@@ -115,13 +115,13 @@ Create a public repository named `shaderoute` at <https://hub.docker.com/>.
 The image name must use this format:
 
 ```text
-DOCKERHUB_USERNAME/shaderoute:v2
+DOCKERHUB_USERNAME/shaderoute:v3
 ```
 
 For this project, the published image name is:
 
 ```text
-abhivk/shaderoute:v2
+abhivk/shaderoute:v3
 ```
 
 ### 2. Sign in to Docker Hub
@@ -135,7 +135,7 @@ Use a Docker Hub access token instead of your account password when prompted. Ne
 ### 3. Tag the local image
 
 ```powershell
-docker tag shaderoute:v2 abhivk/shaderoute:v2
+docker tag shaderoute:v3 abhivk/shaderoute:v3
 ```
 
 Replace `abhivk` with your Docker Hub username when publishing from another account.
@@ -143,7 +143,7 @@ Replace `abhivk` with your Docker Hub username when publishing from another acco
 ### 4. Push the image
 
 ```powershell
-docker push abhivk/shaderoute:v2
+docker push abhivk/shaderoute:v3
 ```
 
 After the push completes, the image is available at:
@@ -159,7 +159,7 @@ This is the workflow for another developer or user who wants to run the publishe
 ### 1. Download the image
 
 ```powershell
-docker pull abhivk/shaderoute:v2
+docker pull abhivk/shaderoute:v3
 ```
 
 Docker downloads the image layers from Docker Hub and stores them locally.
@@ -169,7 +169,7 @@ If the tag is already available locally, Docker may report that the image is up 
 ### 2. Start the application
 
 ```powershell
-docker run --rm --name shaderoute-app -p 5173:8080 abhivk/shaderoute:v2
+docker run --rm --name shaderoute-app -p 5173:8080 abhivk/shaderoute:v3
 ```
 
 Open:
@@ -183,7 +183,7 @@ This workflow does not require the GitHub repository, Node.js, or a local build.
 ### 3. Run in the background (optional)
 
 ```powershell
-docker run -d --name shaderoute-app -p 5173:8080 abhivk/shaderoute:v2
+docker run -d --name shaderoute-app -p 5173:8080 abhivk/shaderoute:v3
 ```
 
 Stop it later with:
@@ -196,12 +196,12 @@ docker stop shaderoute-app
 
 | Task | Command |
 | --- | --- |
-| Build locally | `docker build -t shaderoute:v2 .` |
-| Run local image | `docker run --rm -p 5173:8080 shaderoute:v2` |
-| Tag for Docker Hub | `docker tag shaderoute:v2 abhivk/shaderoute:v2` |
-| Upload image | `docker push abhivk/shaderoute:v2` |
-| Download image | `docker pull abhivk/shaderoute:v2` |
-| Run Docker Hub image | `docker run --rm -p 5173:8080 abhivk/shaderoute:v2` |
+| Build locally | `docker build -t shaderoute:v3 .` |
+| Run local image | `docker run --rm -p 5173:8080 shaderoute:v3` |
+| Tag for Docker Hub | `docker tag shaderoute:v3 abhivk/shaderoute:v3` |
+| Upload image | `docker push abhivk/shaderoute:v3` |
+| Download image | `docker pull abhivk/shaderoute:v3` |
+| Run Docker Hub image | `docker run --rm -p 5173:8080 abhivk/shaderoute:v3` |
 
 ## Troubleshooting
 
@@ -210,7 +210,7 @@ docker stop shaderoute-app
 Use another host port, such as `8080`:
 
 ```powershell
-docker run --rm -p 8080:8080 abhivk/shaderoute:v2
+docker run --rm -p 8080:8080 abhivk/shaderoute:v3
 ```
 
 Then open <http://localhost:8080>.
@@ -250,12 +250,12 @@ docker ps
 Inspect image configuration:
 
 ```powershell
-docker image inspect abhivk/shaderoute:v2
+docker image inspect abhivk/shaderoute:v3
 ```
 
 ### Docker Hub or base-image network error
 
-During `docker build`, Docker must reach Docker Hub to download `node:20-alpine` and `nginxinc/nginx-unprivileged:1.27-alpine`. During `docker pull`, it must reach Docker Hub to download `abhivk/shaderoute:v2`.
+During `docker build`, Docker must reach Docker Hub to download `node:20-alpine` and `nginxinc/nginx-unprivileged:1.27-alpine`. During `docker pull`, it must reach Docker Hub to download `abhivk/shaderoute:v3`.
 
 An error such as `lookup registry-1.docker.io: no such host` indicates a Docker Desktop DNS, proxy, VPN, firewall, or network problem. Restart Docker Desktop, check its proxy settings, temporarily disconnect a VPN, or try another network. Test the base images directly:
 
