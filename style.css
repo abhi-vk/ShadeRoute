@@ -11,6 +11,88 @@
   --green: #236d5d;
 }
 
+/* ── Dark mode ────────────────────────────────── */
+html.dark {
+  --ink: #e2ece8;
+  --muted: #8fa69c;
+  --paper: #0d1a18;
+  --card: #142221;
+  --line: #243533;
+  --orange: #f4845f;
+  --yellow: #f6c453;
+  --mint: #1a3029;
+  --green: #3db895;
+}
+
+html.dark body {
+  background: radial-gradient(circle at 90% 0%, #132b27 0, transparent 34rem), var(--paper);
+}
+
+html.dark input,
+html.dark select {
+  background: var(--card);
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+html.dark .input-wrap,
+html.dark .unit-input {
+  background: var(--card);
+  border-color: var(--line);
+}
+
+html.dark .suggestions {
+  background: var(--card);
+  border-color: var(--line);
+}
+
+html.dark .suggestion {
+  background: var(--card);
+  color: var(--ink);
+  border-bottom-color: var(--line);
+}
+
+html.dark .suggestion:hover,
+html.dark .suggestion.active {
+  background: var(--mint);
+}
+
+html.dark .suggestion-label {
+  background: var(--line);
+}
+
+html.dark .seat-visual {
+  background: linear-gradient(110deg, #112420, #142221 45%, #1e2a1e);
+}
+
+html.dark .vehicle {
+  background: #1a302c;
+  border-color: var(--ink);
+}
+
+html.dark .windshield {
+  background: #243d38;
+  border-color: var(--ink);
+}
+
+html.dark .seat-row i {
+  background: #24433c;
+  border-color: var(--ink);
+}
+
+html.dark .metrics,
+html.dark .details-panel {
+  background: var(--card);
+  border-color: var(--line);
+}
+
+html.dark .secondary-btn {
+  background: var(--card);
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+/* ── Base ─────────────────────────────────────── */
 html {
   background: var(--paper);
   color: var(--ink);
@@ -40,6 +122,30 @@ button { cursor: pointer; }
   align-items: center;
   justify-content: space-between;
   margin-bottom: 74px;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.dark-toggle {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--card);
+  color: var(--ink);
+  font-size: 1.1rem;
+  display: grid;
+  place-items: center;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.dark-toggle:hover {
+  border-color: var(--green);
+  background: var(--mint);
 }
 
 .brand {
@@ -127,6 +233,10 @@ h1 em {
   border-radius: 14px;
 }
 
+html.dark .panel {
+  background: rgba(20, 34, 33, 0.82);
+}
+
 .planner {
   padding: 31px;
   position: relative;
@@ -189,6 +299,50 @@ h2 {
   grid-template-columns: 1fr 1fr;
   gap: 22px 18px;
   position: relative;
+}
+
+/* ── Origin row with locate button ───────────── */
+.origin-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.origin-row .location-field {
+  flex: 1;
+  min-width: 0;
+}
+
+.locate-btn {
+  width: 48px;
+  height: 48px;
+  flex: none;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--card);
+  color: var(--green);
+  font-size: 1.3rem;
+  display: grid;
+  place-items: center;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.locate-btn:hover {
+  border-color: var(--green);
+  background: var(--mint);
+}
+
+.locate-btn:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.locate-btn:disabled {
+  animation: spin 0.8s linear infinite;
 }
 
 .field {
@@ -406,6 +560,10 @@ input, select {
 .form-note span {
   color: var(--orange);
   margin-right: 5px;
+}
+
+.error-note {
+  color: var(--orange);
 }
 
 .result-section {
@@ -650,15 +808,36 @@ input, select {
   margin-top: 18px;
 }
 
-.secondary-btn {
-  width: 100%;
+/* ── Result actions (return trip + plan another) ── */
+.result-actions {
+  display: flex;
+  gap: 12px;
   margin-top: 18px;
+}
+
+.result-actions .secondary-btn {
+  flex: 1;
+}
+
+.return-trip-btn {
+  background: var(--mint) !important;
+  color: var(--green) !important;
+  border-color: var(--green) !important;
+}
+
+.return-trip-btn:hover {
+  background: var(--green) !important;
+  color: #fff !important;
+}
+
+.secondary-btn {
   border: 1px solid var(--line);
   background: #fffdf8;
   color: var(--ink);
   padding: 12px 18px;
   border-radius: 10px;
   font-weight: 700;
+  transition: background 0.2s, color 0.2s;
 }
 
 footer {
@@ -697,6 +876,7 @@ footer {
   flex-direction: row-reverse;
 }
 
+/* ── Mobile ───────────────────────────────────── */
 @media (max-width: 650px) {
   .app-shell {
     width: min(100% - 28px, 520px);
@@ -704,6 +884,7 @@ footer {
   }
 
   .topbar { margin-bottom: 53px; }
+  .topbar-right { gap: 10px; }
   .status-chip { font-size: 0.58rem; }
   .intro { margin-bottom: 30px; }
   .intro-copy { font-size: 0.92rem; }
@@ -761,6 +942,10 @@ footer {
   }
 
   .map { height: 230px; }
+
+  .result-actions {
+    flex-direction: column;
+  }
 
   footer {
     display: block;

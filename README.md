@@ -39,10 +39,10 @@ See the complete [Docker guide](docs/DOCKER.md) for building from GitHub, publis
 
 ```powershell
 docker build -t shaderoute .
-docker run --rm -p 5173:5173 shaderoute
+docker run --rm -p 8080:8080 shaderoute
 ```
 
-Then open http://localhost:5173 in your browser.
+Then open http://localhost:8080 in your browser.
 
 ## Data Sources
 
